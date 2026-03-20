@@ -31,7 +31,7 @@ public class FcDependenciesMojo extends AbstractMojo {
 
 	private static final String MINECRAFT_GROUP_ID = "net.minecraft";
 	private static final String MINECRAFT_ARTIFACT_ID = "minecraft";
-	private static final String DANGERZONE_GROUP_ID = "net.dangerzone";
+	private static final String DANGERZONE_GROUP_ID = "net.dangerzonegame";
 	private static final String DANGERZONE_ARTIFACT_ID = "dangerzone";
 	private static final String DANGERZONE_LWJGL_VERSION = "3.3.0";
 
