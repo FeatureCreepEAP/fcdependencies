@@ -140,8 +140,8 @@ public class FcDependenciesMojo extends AbstractMojo {
 		deleteDirectory(workingDir.toPath());
 	}
 
-	private void installSourcesJar(String groupId, String artifactId, String version, File sourcesJar, String classifier)
-			throws Exception {
+	private void installSourcesJar(String groupId, String artifactId, String version, File sourcesJar,
+			String classifier) throws Exception {
 
 		if (sourcesJar == null || !sourcesJar.exists()) {
 			throw new IllegalStateException("Sources jar missing.");
@@ -161,7 +161,8 @@ public class FcDependenciesMojo extends AbstractMojo {
 		getLog().info("Installed " + artifactId + " sources (" + sourcesClassifier + ")");
 	}
 
-	private File createSourcesJar(File sourcesDir, String artifactId, String version, String classifier) throws Exception {
+	private File createSourcesJar(File sourcesDir, String artifactId, String version, String classifier)
+			throws Exception {
 
 		String classifierSuffix = (classifier == null || classifier.isBlank()) ? "" : "-" + classifier;
 		File sourcesJar = new File(sourcesDir.getParentFile(),
@@ -204,15 +205,14 @@ public class FcDependenciesMojo extends AbstractMojo {
 
 		File repoBase = new File(session.getLocalRepository().getBasedir());
 		String classifierSuffix = (classifier == null || classifier.isBlank()) ? "" : "-" + classifier;
-		File artifactFile = new File(repoBase,
-				groupId.replace('.', '/') + "/" + artifactId + "/" + version + "/" + artifactId + "-" + version
-						+ classifierSuffix + ".jar");
+		File artifactFile = new File(repoBase, groupId.replace('.', '/') + "/" + artifactId + "/" + version + "/"
+				+ artifactId + "-" + version + classifierSuffix + ".jar");
 
 		return artifactFile.exists();
 	}
 
-	private void installJarToLocalRepo(String groupId, String artifactId, String version, File jarFile, String classifier,
-			File pomFile) throws Exception {
+	private void installJarToLocalRepo(String groupId, String artifactId, String version, File jarFile,
+			String classifier, File pomFile) throws Exception {
 
 		org.apache.maven.artifact.Artifact jarArtifact = new org.apache.maven.artifact.DefaultArtifact(groupId,
 				artifactId, version, "compile", "jar", classifier,
@@ -226,7 +226,8 @@ public class FcDependenciesMojo extends AbstractMojo {
 
 		pomArtifact.setFile(pomFile);
 
-		artifactInstaller.install(session.getProjectBuildingRequest(), java.util.Arrays.asList(pomArtifact, jarArtifact));
+		artifactInstaller.install(session.getProjectBuildingRequest(),
+				java.util.Arrays.asList(pomArtifact, jarArtifact));
 
 		String display = (classifier == null || classifier.isBlank()) ? version : version + " (" + classifier + ")";
 		getLog().info("Installed " + artifactId + " " + display);
@@ -253,8 +254,9 @@ public class FcDependenciesMojo extends AbstractMojo {
 			depsBuilder.append("</dependency>\n");
 		}
 
-		return createPomFile(MINECRAFT_GROUP_ID, MINECRAFT_ARTIFACT_ID, version, versionJson.get("javaVersion").get("majorVersion").asInt(),
-				depsBuilder.toString(), "Minecraft", "https://libraries.minecraft.net");
+		return createPomFile(MINECRAFT_GROUP_ID, MINECRAFT_ARTIFACT_ID, version,
+				versionJson.get("javaVersion").get("majorVersion").asInt(), depsBuilder.toString(), "Minecraft",
+				"https://libraries.minecraft.net");
 	}
 
 	private File createDangerZonePom() throws Exception {
@@ -269,8 +271,8 @@ public class FcDependenciesMojo extends AbstractMojo {
 				null);
 	}
 
-	private File createPomFile(String groupId, String artifactId, String version, int javaVersion, String dependenciesXml,
-			String repositoryId, String repositoryUrl) throws Exception {
+	private File createPomFile(String groupId, String artifactId, String version, int javaVersion,
+			String dependenciesXml, String repositoryId, String repositoryUrl) throws Exception {
 		StringBuilder pomContent = new StringBuilder();
 		pomContent.append("<project xmlns=\"http://maven.apache.org/POM/4.0.0\" ");
 		pomContent.append("xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" ");

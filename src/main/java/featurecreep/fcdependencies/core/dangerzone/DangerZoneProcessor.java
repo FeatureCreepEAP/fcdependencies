@@ -9,7 +9,8 @@ public class DangerZoneProcessor {
 	public DangerZoneResult process(String version, File workingDir) throws Exception {
 
 		if (!VERSION.equals(version)) {
-			throw new IllegalArgumentException("Unsupported DangerZone version: " + version + ". Supported: " + VERSION);
+			throw new IllegalArgumentException(
+					"Unsupported DangerZone version: " + version + ". Supported: " + VERSION);
 		}
 
 		DangerZoneZipService zipService = new DangerZoneZipService();

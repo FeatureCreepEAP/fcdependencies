@@ -6,8 +6,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.asbestosstar</groupId>
-<artifactId>fcdependencies-maven-plugin</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <artifactId>fcdependencies-maven-plugin</artifactId>
+    <version>0.0.1</version>
     <packaging>maven-plugin</packaging>
 
     <name>FCDependencies</name>
@@ -49,12 +49,12 @@
     </repositories>
 
     <dependencies>
-
         <!-- Maven Plugin API -->
         <dependency>
             <groupId>org.apache.maven</groupId>
             <artifactId>maven-plugin-api</artifactId>
             <version>${maven.plugin.api.version}</version>
+            <scope>provided</scope>
         </dependency>
 
         <!-- Plugin Annotations -->
@@ -93,20 +93,15 @@
             <version>1.11.2</version>
         </dependency>
 
-
-<dependency>
-    <groupId>org.apache.maven.shared</groupId>
-    <artifactId>maven-artifact-transfer</artifactId>
-    <version>0.13.1</version>
-</dependency>
-
-
-
+        <dependency>
+            <groupId>org.apache.maven.shared</groupId>
+            <artifactId>maven-artifact-transfer</artifactId>
+            <version>0.13.1</version>
+        </dependency>
     </dependencies>
 
     <build>
         <plugins>
-
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.11.0</version>
@@ -114,7 +109,6 @@
                     <release>17</release>
                 </configuration>
             </plugin>
-
 
             <!-- Attach Sources -->
             <plugin>
@@ -141,11 +135,34 @@
                     </execution>
                 </executions>
             </plugin>
-            
-            
-            
-            
 
+            <!-- GPG Signing Plugin (Required for Central) -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-gpg-plugin</artifactId>
+                <version>3.0.1</version>
+                <executions>
+                    <execution>
+                        <id>sign-artifacts</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>sign</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Central Publishing Plugin (Required for Central) -->
+            <plugin>
+                <groupId>org.sonatype.central</groupId>
+                <artifactId>central-publishing-maven-plugin</artifactId>
+                <version>0.7.0</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <publishingServerId>central</publishingServerId>
+                    <autoPublish>true</autoPublish>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 
