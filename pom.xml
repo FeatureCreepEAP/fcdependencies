@@ -1,0 +1,152 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.asbestosstar</groupId>
+<artifactId>fcdependencies-maven-plugin</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <packaging>maven-plugin</packaging>
+
+    <name>FCDependencies</name>
+    <description>MojMaps Remapper Maven Plugin</description>
+    <url>https://github.com/FeatureCreepEAP/fcdependencies</url>
+
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>https://opensource.org/licenses/MIT</url>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <name>AsbestosStar</name>
+            <email>asbestosstar@asbestosstar.com</email>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:https://github.com/FeatureCreepEAP/fcdependencies.git</connection>
+        <developerConnection>scm:git:https://github.com/FeatureCreepEAP/fcdependencies.git</developerConnection>
+        <url>https://github.com/FeatureCreepEAP/fcdependencies</url>
+        <tag>HEAD</tag>
+    </scm>
+
+    <properties>
+        <maven.compiler.release>17</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.plugin.api.version>3.9.6</maven.plugin.api.version>
+    </properties>
+
+    <repositories>
+        <repository>
+            <id>fabric</id>
+            <url>https://maven.fabricmc.net/</url>
+        </repository>
+    </repositories>
+
+    <dependencies>
+
+        <!-- Maven Plugin API -->
+        <dependency>
+            <groupId>org.apache.maven</groupId>
+            <artifactId>maven-plugin-api</artifactId>
+            <version>${maven.plugin.api.version}</version>
+        </dependency>
+
+        <!-- Plugin Annotations -->
+        <dependency>
+            <groupId>org.apache.maven.plugin-tools</groupId>
+            <artifactId>maven-plugin-annotations</artifactId>
+            <version>3.10.2</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- JBoss DMR -->
+        <dependency>
+            <groupId>org.jboss</groupId>
+            <artifactId>jboss-dmr</artifactId>
+            <version>1.6.1.Final</version>
+        </dependency>
+
+        <!-- AssistRemapper -->
+        <dependency>
+            <groupId>com.asbestosstar</groupId>
+            <artifactId>assistremapper</artifactId>
+            <version>1.2</version>
+        </dependency>
+
+        <!-- Fabric CFR -->
+        <dependency>
+            <groupId>net.fabricmc</groupId>
+            <artifactId>cfr</artifactId>
+            <version>0.2.2</version>
+        </dependency>
+
+        <!-- VineFlower -->
+        <dependency>
+            <groupId>org.vineflower</groupId>
+            <artifactId>vineflower</artifactId>
+            <version>1.11.2</version>
+        </dependency>
+
+
+<dependency>
+    <groupId>org.apache.maven.shared</groupId>
+    <artifactId>maven-artifact-transfer</artifactId>
+    <version>0.13.1</version>
+</dependency>
+
+
+
+    </dependencies>
+
+    <build>
+        <plugins>
+
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.11.0</version>
+                <configuration>
+                    <release>17</release>
+                </configuration>
+            </plugin>
+
+
+            <!-- Attach Sources -->
+            <plugin>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>3.3.0</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>jar-no-fork</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Attach Javadoc -->
+            <plugin>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.6.0</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            
+            
+            
+            
+
+        </plugins>
+    </build>
+
+</project>
