@@ -19,6 +19,8 @@ import org.apache.maven.shared.transfer.artifact.install.ArtifactInstaller;
 import org.jboss.dmr.ModelNode;
 
 import featurecreep.fcdependencies.core.DecompilerService;
+import featurecreep.fcdependencies.core.dangerzone.DangerZoneProcessor;
+import featurecreep.fcdependencies.core.dangerzone.DangerZoneResult;
 import featurecreep.fcdependencies.core.minecraft.MinecraftProcessor;
 import featurecreep.fcdependencies.core.minecraft.MinecraftResult;
 import featurecreep.fcdependencies.core.minecraft.MinecraftSide;
@@ -26,6 +28,12 @@ import featurecreep.fcdependencies.core.minecraft.MinecraftVersionManifestServic
 
 @Mojo(name = "fcdependencies", defaultPhase = LifecyclePhase.GENERATE_SOURCES, requiresDependencyResolution = ResolutionScope.NONE)
 public class FcDependenciesMojo extends AbstractMojo {
+
+	private static final String MINECRAFT_GROUP_ID = "net.minecraft";
+	private static final String MINECRAFT_ARTIFACT_ID = "minecraft";
+	private static final String DANGERZONE_GROUP_ID = "net.dangerzone";
+	private static final String DANGERZONE_ARTIFACT_ID = "dangerzone";
+	private static final String DANGERZONE_LWJGL_VERSION = "3.3.0";
 
 	@Parameter(property = "version", required = true)
 	private String version;
@@ -52,52 +60,88 @@ public class FcDependenciesMojo extends AbstractMojo {
 	public void execute() throws MojoExecutionException {
 
 		try {
-
-			if (!"minecraft".equalsIgnoreCase(app)) {
-				getLog().info("App '" + app + "' not handled by fcdependencies. Skipping.");
+			if ("minecraft".equalsIgnoreCase(app)) {
+				executeMinecraft();
 				return;
 			}
 
-			String classifier = side.toLowerCase();
-
-			if (isAlreadyInstalled(classifier)) {
-				getLog().info("Minecraft already installed. Skipping.");
-				addMinecraftDependency();
+			if ("dangerzone".equalsIgnoreCase(app)) {
+				executeDangerZone();
 				return;
 			}
 
-			getLog().info("Resolving Minecraft " + version);
-
-			MinecraftVersionManifestService manifest = new MinecraftVersionManifestService();
-			ModelNode versionJson = manifest.getVersionJson(version);
-
-			File workingDir = createWorkingDirectory(classifier);
-
-			MinecraftProcessor processor = new MinecraftProcessor();
-
-			MinecraftResult result = processor.process(version, MinecraftSide.valueOf(side),
-					DecompilerService.Engine.valueOf(decompiler), workingDir);
-
-			File mappedJar = result.mappedJar;
-			File sourcesDir = result.sourcesDir;
-
-			if (!mappedJar.exists() || mappedJar.length() == 0) {
-				throw new IllegalStateException("Mapped jar missing or empty.");
-			}
-
-			installJarToLocalRepo(mappedJar, classifier, versionJson);
-
-			File sourcesJar = createSourcesJar(sourcesDir, classifier);
-			installSourcesJar(sourcesJar, classifier);
-
-			deleteDirectory(workingDir.toPath());
-
+			getLog().info("App '" + app + "' not handled by fcdependencies. Skipping.");
 		} catch (Exception e) {
-			throw new MojoExecutionException("Minecraft processing failed", e);
+			throw new MojoExecutionException(app + " processing failed", e);
 		}
 	}
 
-	private void installSourcesJar(File sourcesJar, String classifier) throws Exception {
+	private void executeMinecraft() throws Exception {
+		String classifier = side.toLowerCase();
+
+		if (isAlreadyInstalled(MINECRAFT_GROUP_ID, MINECRAFT_ARTIFACT_ID, version, classifier)) {
+			getLog().info("Minecraft already installed. Skipping.");
+			addDependency(MINECRAFT_GROUP_ID, MINECRAFT_ARTIFACT_ID, version, classifier);
+			return;
+		}
+
+		getLog().info("Resolving Minecraft " + version);
+
+		MinecraftVersionManifestService manifest = new MinecraftVersionManifestService();
+		ModelNode versionJson = manifest.getVersionJson(version);
+
+		File workingDir = createWorkingDirectory(MINECRAFT_GROUP_ID, MINECRAFT_ARTIFACT_ID, classifier);
+
+		MinecraftProcessor processor = new MinecraftProcessor();
+		MinecraftResult result = processor.process(version, MinecraftSide.fromString(side),
+				DecompilerService.Engine.valueOf(decompiler), workingDir);
+
+		File mappedJar = result.mappedJar;
+		File sourcesDir = result.sourcesDir;
+
+		if (!mappedJar.exists() || mappedJar.length() == 0) {
+			throw new IllegalStateException("Mapped jar missing or empty.");
+		}
+
+		installJarToLocalRepo(MINECRAFT_GROUP_ID, MINECRAFT_ARTIFACT_ID, version, mappedJar, classifier,
+				createMinecraftPom(versionJson));
+
+		File sourcesJar = createSourcesJar(sourcesDir, MINECRAFT_ARTIFACT_ID, version, classifier);
+		installSourcesJar(MINECRAFT_GROUP_ID, MINECRAFT_ARTIFACT_ID, version, sourcesJar, classifier);
+		addDependency(MINECRAFT_GROUP_ID, MINECRAFT_ARTIFACT_ID, version, classifier);
+
+		deleteDirectory(workingDir.toPath());
+	}
+
+	private void executeDangerZone() throws Exception {
+		if (isAlreadyInstalled(DANGERZONE_GROUP_ID, DANGERZONE_ARTIFACT_ID, version, null)) {
+			getLog().info("DangerZone already installed. Skipping.");
+			addDependency(DANGERZONE_GROUP_ID, DANGERZONE_ARTIFACT_ID, version, null);
+			return;
+		}
+
+		getLog().info("Resolving DangerZone " + version);
+
+		File workingDir = createWorkingDirectory(DANGERZONE_GROUP_ID, DANGERZONE_ARTIFACT_ID, null);
+		DangerZoneProcessor processor = new DangerZoneProcessor();
+		DangerZoneResult result = processor.process(version, workingDir);
+
+		if (!result.jarFile.exists() || result.jarFile.length() == 0) {
+			throw new IllegalStateException("DangerZone jar missing or empty.");
+		}
+
+		installJarToLocalRepo(DANGERZONE_GROUP_ID, DANGERZONE_ARTIFACT_ID, version, result.jarFile, null,
+				createDangerZonePom());
+
+		File sourcesJar = createSourcesJar(result.sourcesDir, DANGERZONE_ARTIFACT_ID, version, null);
+		installSourcesJar(DANGERZONE_GROUP_ID, DANGERZONE_ARTIFACT_ID, version, sourcesJar, null);
+		addDependency(DANGERZONE_GROUP_ID, DANGERZONE_ARTIFACT_ID, version, null);
+
+		deleteDirectory(workingDir.toPath());
+	}
+
+	private void installSourcesJar(String groupId, String artifactId, String version, File sourcesJar, String classifier)
+			throws Exception {
 
 		if (sourcesJar == null || !sourcesJar.exists()) {
 			throw new IllegalStateException("Sources jar missing.");
@@ -105,8 +149,8 @@ public class FcDependenciesMojo extends AbstractMojo {
 
 		String sourcesClassifier = (classifier == null || classifier.isEmpty()) ? "sources" : classifier + "-sources";
 
-		org.apache.maven.artifact.Artifact sourcesArtifact = new org.apache.maven.artifact.DefaultArtifact(
-				"net.minecraft", "minecraft", version, "compile", "jar", sourcesClassifier,
+		org.apache.maven.artifact.Artifact sourcesArtifact = new org.apache.maven.artifact.DefaultArtifact(groupId,
+				artifactId, version, "compile", "jar", sourcesClassifier,
 				new org.apache.maven.artifact.handler.DefaultArtifactHandler("jar"));
 
 		sourcesArtifact.setFile(sourcesJar);
@@ -114,13 +158,14 @@ public class FcDependenciesMojo extends AbstractMojo {
 		artifactInstaller.install(session.getProjectBuildingRequest(),
 				java.util.Collections.singletonList(sourcesArtifact));
 
-		getLog().info("Installed Minecraft sources (" + sourcesClassifier + ")");
+		getLog().info("Installed " + artifactId + " sources (" + sourcesClassifier + ")");
 	}
 
-	private File createSourcesJar(File sourcesDir, String classifier) throws Exception {
+	private File createSourcesJar(File sourcesDir, String artifactId, String version, String classifier) throws Exception {
 
+		String classifierSuffix = (classifier == null || classifier.isBlank()) ? "" : "-" + classifier;
 		File sourcesJar = new File(sourcesDir.getParentFile(),
-				"minecraft-" + version + "-" + classifier + "-sources.jar");
+				artifactId + "-" + version + classifierSuffix + "-sources.jar");
 
 		try (java.util.jar.JarOutputStream jos = new java.util.jar.JarOutputStream(
 				new java.io.FileOutputStream(sourcesJar))) {
@@ -141,11 +186,12 @@ public class FcDependenciesMojo extends AbstractMojo {
 		return sourcesJar;
 	}
 
-	private File createWorkingDirectory(String classifier) {
+	private File createWorkingDirectory(String groupId, String artifactId, String classifier) {
 
 		File repoBase = new File(session.getLocalRepository().getBasedir());
-
-		File base = new File(repoBase, "net/minecraft/minecraft/" + version + "/.fcwork-" + classifier);
+		String classifierSuffix = (classifier == null || classifier.isBlank()) ? "" : "-" + classifier;
+		File base = new File(repoBase,
+				groupId.replace('.', '/') + "/" + artifactId + "/" + version + "/.fcwork" + classifierSuffix);
 
 		if (!base.exists()) {
 			base.mkdirs();
@@ -154,36 +200,36 @@ public class FcDependenciesMojo extends AbstractMojo {
 		return base;
 	}
 
-	private boolean isAlreadyInstalled(String classifier) {
+	private boolean isAlreadyInstalled(String groupId, String artifactId, String version, String classifier) {
 
 		File repoBase = new File(session.getLocalRepository().getBasedir());
-
+		String classifierSuffix = (classifier == null || classifier.isBlank()) ? "" : "-" + classifier;
 		File artifactFile = new File(repoBase,
-				"net/minecraft/minecraft/" + version + "/minecraft-" + version + "-" + classifier + ".jar");
+				groupId.replace('.', '/') + "/" + artifactId + "/" + version + "/" + artifactId + "-" + version
+						+ classifierSuffix + ".jar");
 
 		return artifactFile.exists();
 	}
 
-	private void installJarToLocalRepo(File jarFile, String classifier, ModelNode versionJson) throws Exception {
+	private void installJarToLocalRepo(String groupId, String artifactId, String version, File jarFile, String classifier,
+			File pomFile) throws Exception {
 
-		File pomFile = createMinecraftPom(versionJson);
-
-		org.apache.maven.artifact.Artifact jarArtifact = new org.apache.maven.artifact.DefaultArtifact("net.minecraft",
-				"minecraft", version, "compile", "jar", classifier,
+		org.apache.maven.artifact.Artifact jarArtifact = new org.apache.maven.artifact.DefaultArtifact(groupId,
+				artifactId, version, "compile", "jar", classifier,
 				new org.apache.maven.artifact.handler.DefaultArtifactHandler("jar"));
 
 		jarArtifact.setFile(jarFile);
 
-		org.apache.maven.artifact.Artifact pomArtifact = new org.apache.maven.artifact.DefaultArtifact("net.minecraft",
-				"minecraft", version, "compile", "pom", null,
+		org.apache.maven.artifact.Artifact pomArtifact = new org.apache.maven.artifact.DefaultArtifact(groupId,
+				artifactId, version, "compile", "pom", null,
 				new org.apache.maven.artifact.handler.DefaultArtifactHandler("pom"));
 
 		pomArtifact.setFile(pomFile);
 
-		artifactInstaller.install(session.getProjectBuildingRequest(),
-				java.util.Arrays.asList(pomArtifact, jarArtifact));
+		artifactInstaller.install(session.getProjectBuildingRequest(), java.util.Arrays.asList(pomArtifact, jarArtifact));
 
-		getLog().info("Installed Minecraft " + version + " (" + classifier + ")");
+		String display = (classifier == null || classifier.isBlank()) ? version : version + " (" + classifier + ")";
+		getLog().info("Installed " + artifactId + " " + display);
 	}
 
 	private File createMinecraftPom(ModelNode versionJson) throws Exception {
@@ -193,7 +239,6 @@ public class FcDependenciesMojo extends AbstractMojo {
 		StringBuilder depsBuilder = new StringBuilder();
 
 		for (ModelNode lib : versionJson.get("libraries").asList()) {
-
 			if (!lib.has("name"))
 				continue;
 
@@ -208,29 +253,48 @@ public class FcDependenciesMojo extends AbstractMojo {
 			depsBuilder.append("</dependency>\n");
 		}
 
-		String pomContent = "<project xmlns=\"http://maven.apache.org/POM/4.0.0\" "
-				+ "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" "
-				+ "xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 "
-				+ "https://maven.apache.org/xsd/maven-4.0.0.xsd\">" +
+		return createPomFile(MINECRAFT_GROUP_ID, MINECRAFT_ARTIFACT_ID, version, versionJson.get("javaVersion").get("majorVersion").asInt(),
+				depsBuilder.toString(), "Minecraft", "https://libraries.minecraft.net");
+	}
 
-				"<modelVersion>4.0.0</modelVersion>" +
+	private File createDangerZonePom() throws Exception {
+		StringBuilder depsBuilder = new StringBuilder();
+		depsBuilder.append("<dependency>\n");
+		depsBuilder.append("<groupId>org.lwjgl</groupId>\n");
+		depsBuilder.append("<artifactId>lwjgl</artifactId>\n");
+		depsBuilder.append("<version>").append(DANGERZONE_LWJGL_VERSION).append("</version>\n");
+		depsBuilder.append("</dependency>\n");
 
-				"<groupId>net.minecraft</groupId>" + "<artifactId>minecraft</artifactId>" + "<version>" + version
-				+ "</version>" +
+		return createPomFile(DANGERZONE_GROUP_ID, DANGERZONE_ARTIFACT_ID, version, 8, depsBuilder.toString(), null,
+				null);
+	}
 
-				"<properties>" + "<maven.compiler.source>" + javaVersion + "</maven.compiler.source>"
-				+ "<maven.compiler.target>" + javaVersion + "</maven.compiler.target>" + "</properties>" +
+	private File createPomFile(String groupId, String artifactId, String version, int javaVersion, String dependenciesXml,
+			String repositoryId, String repositoryUrl) throws Exception {
+		StringBuilder pomContent = new StringBuilder();
+		pomContent.append("<project xmlns=\"http://maven.apache.org/POM/4.0.0\" ");
+		pomContent.append("xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" ");
+		pomContent.append("xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 ");
+		pomContent.append("https://maven.apache.org/xsd/maven-4.0.0.xsd\">");
+		pomContent.append("<modelVersion>4.0.0</modelVersion>");
+		pomContent.append("<groupId>").append(groupId).append("</groupId>");
+		pomContent.append("<artifactId>").append(artifactId).append("</artifactId>");
+		pomContent.append("<version>").append(version).append("</version>");
+		pomContent.append("<properties><maven.compiler.source>").append(javaVersion)
+				.append("</maven.compiler.source><maven.compiler.target>").append(javaVersion)
+				.append("</maven.compiler.target></properties>");
 
-				"<repositories>" + "  <repository>" + "    <id>Minecraft</id>" + "    <name>Minecraft</name>"
-				+ "    <url>https://libraries.minecraft.net</url>" + "  </repository>" + "</repositories>" +
+		if (repositoryId != null && repositoryUrl != null) {
+			pomContent.append("<repositories><repository><id>").append(repositoryId).append("</id><name>")
+					.append(repositoryId).append("</name><url>").append(repositoryUrl)
+					.append("</url></repository></repositories>");
+		}
 
-				"<dependencies>" + depsBuilder + "</dependencies>" +
+		pomContent.append("<dependencies>").append(dependenciesXml).append("</dependencies>");
+		pomContent.append("</project>");
 
-				"</project>";
-
-		File pomFile = File.createTempFile("minecraft-", ".pom");
-		Files.writeString(pomFile.toPath(), pomContent);
-
+		File pomFile = File.createTempFile(artifactId + "-", ".pom");
+		Files.writeString(pomFile.toPath(), pomContent.toString());
 		return pomFile;
 	}
 
@@ -247,13 +311,15 @@ public class FcDependenciesMojo extends AbstractMojo {
 		});
 	}
 
-	private void addMinecraftDependency() {
+	private void addDependency(String groupId, String artifactId, String version, String classifier) {
 
 		Dependency dependency = new Dependency();
-		dependency.setGroupId("net.minecraft");
-		dependency.setArtifactId("minecraft");
+		dependency.setGroupId(groupId);
+		dependency.setArtifactId(artifactId);
 		dependency.setVersion(version);
-		dependency.setClassifier(side.toLowerCase());
+		if (classifier != null && !classifier.isBlank()) {
+			dependency.setClassifier(classifier);
+		}
 		dependency.setScope("compile");
 
 		project.getModel().addDependency(dependency);
