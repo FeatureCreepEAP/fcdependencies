@@ -26,7 +26,7 @@ public class DangerZoneZipService {
 
 	public File extractRuntimeJar(File zipFile, File workingDir) throws Exception {
 
-		File out = new File(workingDir, "dangerzone-2.7.jar");
+		File out = new File(workingDir, "dangerzone-2.8.jar");
 		if (out.exists() && out.length() > 0) {
 			return out;
 		}

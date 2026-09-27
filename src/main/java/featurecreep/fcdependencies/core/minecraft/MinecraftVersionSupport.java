@@ -19,6 +19,12 @@ public final class MinecraftVersionSupport {
 		return version.equals("1.21.11");
 	}
 
+	public static String resolveManifestVersion(String version) {
+		if ("26.1.2".equals(version)) return "26.1";
+		if ("26.4".equals(version)) return "26.4-snapshot1";
+		return version;
+	}
+
 	private static int getMajor(String version) {
 		int dot = version.indexOf('.');
 		if (dot == -1)

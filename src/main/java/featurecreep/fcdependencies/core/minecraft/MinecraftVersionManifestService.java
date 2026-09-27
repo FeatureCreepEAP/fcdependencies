@@ -10,14 +10,15 @@ public class MinecraftVersionManifestService {
 
 	public ModelNode getVersionJson(String version) throws Exception {
 
+		String manifestVersion = MinecraftVersionSupport.resolveManifestVersion(version);
 		ModelNode manifest = ModelNode.fromJSONStream(new URL(MANIFEST).openStream());
 
 		for (ModelNode node : manifest.get("versions").asList()) {
-			if (node.get("id").asString().equals(version)) {
+			if (node.get("id").asString().equals(manifestVersion)) {
 				return ModelNode.fromJSONStream(new URL(node.get("url").asString()).openStream());
 			}
 		}
 
-		throw new IllegalArgumentException("Version not found: " + version);
+		throw new IllegalArgumentException("Version not found: " + version + " (manifest id " + manifestVersion + ")");
 	}
 }

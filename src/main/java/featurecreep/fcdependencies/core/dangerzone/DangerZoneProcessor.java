@@ -4,7 +4,7 @@ import java.io.File;
 
 public class DangerZoneProcessor {
 
-	public static final String VERSION = "2.7";
+	public static final String VERSION = "2.8";
 
 	public DangerZoneResult process(String version, File workingDir) throws Exception {
 
