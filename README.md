@@ -21,6 +21,8 @@ Both plugins provide the same tasks and goals. Vanilla is the default. Set `runM
 | `runClient` | `fcdependencies:run-client` | Launch the client |
 | `runServer` | `fcdependencies:run-server` | Launch the dedicated server |
 
+Gradle only: `genSources` downloads the client, remaps it and decompiles it into `build/fcdependencies/<version>/minecraft-<version>-client-sources.jar` for IDE navigation. Choose the decompiler with `decompiler = 'vineflower'` (default) or `'fabric_cfr'`.
+
 Gradle:
 
 ```groovy

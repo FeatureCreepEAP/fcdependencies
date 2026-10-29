@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 
@@ -26,6 +27,7 @@ import org.gradle.jvm.toolchain.JavaLanguageVersion;
 import org.gradle.jvm.toolchain.JavaLauncher;
 import org.gradle.jvm.toolchain.JavaToolchainService;
 
+import featurecreep.fcdependencies.core.DecompilerService;
 import featurecreep.fcdependencies.core.minecraft.FeatureCreepModInstaller;
 import featurecreep.fcdependencies.core.minecraft.FeatureCreepRuntime;
 import featurecreep.fcdependencies.core.minecraft.FeatureCreepVersions;
@@ -51,6 +53,7 @@ public class FcDependenciesGradlePlugin implements Plugin<Project> {
 		ext.getPlayerName().convention("Dev");
 		ext.getRunDirectory().convention(project.getRootProject().getLayout().getProjectDirectory().dir("run"));
 		ext.getRunMode().convention(RunMode.VANILLA.name().toLowerCase());
+		ext.getDecompiler().convention("vineflower");
 
 		Provider<Directory> versionDir = project.getLayout().getBuildDirectory()
 				.dir(ext.getMinecraftVersion().map(version -> "fcdependencies/" + version));
@@ -59,6 +62,7 @@ public class FcDependenciesGradlePlugin implements Plugin<Project> {
 				"fcdependenciesPrepareClient", MinecraftSide.CLIENT);
 		TaskProvider<PrepareMinecraftTask> prepareServer = registerPrepare(project, ext, versionDir,
 				"fcdependenciesPrepareServer", MinecraftSide.SERVER);
+		registerGenSources(project, ext, versionDir);
 
 		project.getDependencies().add("compileOnly",
 				project.files(versionDir.map(dir -> dir.file("client.jar"))).builtBy(prepareClient));
@@ -133,6 +137,34 @@ public class FcDependenciesGradlePlugin implements Plugin<Project> {
 			task.getSide().set(side);
 			task.getOutputDirectory().set(versionDir);
 		});
+	}
+
+	private static TaskProvider<GenSourcesTask> registerGenSources(Project project, FcDependenciesExtension ext,
+			Provider<Directory> versionDir) {
+		return project.getTasks().register("genSources", GenSourcesTask.class, task -> {
+			task.setGroup(GROUP);
+			task.setDescription("Downloads the Minecraft client and generates a sources jar for the configured version.");
+			task.getMinecraftVersion().set(ext.getMinecraftVersion());
+			task.getDecompiler().set(ext.getDecompiler().map(FcDependenciesGradlePlugin::parseDecompiler));
+			task.getWorkingDirectory().set(versionDir.map(dir -> dir.dir("genSources")));
+			task.getLocalRepository().set(project.getLayout().dir(project.provider(FcDependenciesGradlePlugin::localMavenRepository)));
+			task.getSourcesJar().set(ext.getMinecraftVersion().flatMap(version -> versionDir
+					.map(dir -> dir.file("minecraft-" + version + "-client-sources.jar"))));
+		});
+	}
+
+	static File localMavenRepository() {
+		String override = System.getProperty("maven.repo.local");
+		if (override != null && !override.isBlank()) return new File(override);
+		return new File(System.getProperty("user.home"), ".m2/repository");
+	}
+
+	static DecompilerService.Engine parseDecompiler(String name) {
+		try {
+			return DecompilerService.Engine.valueOf(name.toUpperCase(Locale.ROOT));
+		} catch (IllegalArgumentException e) {
+			throw new GradleException("fcdependencies: unknown decompiler '" + name + "', expected vineflower or fabric_cfr", e);
+		}
 	}
 
 	static RunMode runMode(FcDependenciesExtension ext) {

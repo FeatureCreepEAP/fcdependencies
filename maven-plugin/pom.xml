@@ -7,7 +7,7 @@
 
     <groupId>com.asbestosstar</groupId>
     <artifactId>fcdependencies-maven-plugin</artifactId>
-    <version>0.1.0</version>
+    <version>0.2.0</version>
     <packaging>maven-plugin</packaging>
 
     <name>FCDependencies</name>
@@ -85,7 +85,7 @@
         <dependency>
             <groupId>com.asbestosstar</groupId>
             <artifactId>fcdependencies-core</artifactId>
-            <version>0.1.0</version>
+            <version>0.2.0</version>
         </dependency>
 
         <dependency>

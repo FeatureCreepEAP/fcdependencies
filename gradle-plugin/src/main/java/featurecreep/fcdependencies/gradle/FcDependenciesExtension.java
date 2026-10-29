@@ -17,6 +17,9 @@ public abstract class FcDependenciesExtension {
 	/** "vanilla" (default) or "featurecreep". Selects what runClient and runServer launch. */
 	public abstract Property<String> getRunMode();
 
+	/** Decompiler used by genSources: "vineflower" (default) or "fabric_cfr". */
+	public abstract Property<String> getDecompiler();
+
 	/** FeatureCreep loader version, resolved from Maven. Required when runMode is "featurecreep". */
 	public abstract Property<String> getFeatureCreepLoaderVersion();
 
