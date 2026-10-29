@@ -7,11 +7,11 @@
 
     <groupId>com.asbestosstar</groupId>
     <artifactId>fcdependencies-maven-plugin</artifactId>
-    <version>0.0.1</version>
+    <version>0.1.0</version>
     <packaging>maven-plugin</packaging>
 
     <name>FCDependencies</name>
-    <description>MojMaps Remapper Maven Plugin</description>
+    <description>Provides prepare, run-client and run-server goals for Minecraft 26.1.2 and newer, vanilla or FeatureCreep.</description>
     <url>https://github.com/FeatureCreepEAP/fcdependencies</url>
 
     <licenses>
@@ -36,9 +36,10 @@
     </scm>
 
     <properties>
-        <maven.compiler.release>17</maven.compiler.release>
+        <maven.compiler.release>25</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.plugin.api.version>3.9.6</maven.plugin.api.version>
+        <maven.version>3.9.12</maven.version>
     </properties>
 
     <repositories>
@@ -65,38 +66,39 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- JBoss DMR -->
+        <!-- Maven core and resolver, provided by the running Maven -->
         <dependency>
-            <groupId>org.jboss</groupId>
-            <artifactId>jboss-dmr</artifactId>
-            <version>1.6.1.Final</version>
+            <groupId>org.apache.maven</groupId>
+            <artifactId>maven-core</artifactId>
+            <version>${maven.version}</version>
+            <scope>provided</scope>
         </dependency>
 
-        <!-- AssistRemapper -->
+        <dependency>
+            <groupId>org.apache.maven.resolver</groupId>
+            <artifactId>maven-resolver-api</artifactId>
+            <version>1.9.22</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- Shared launch and download logic -->
         <dependency>
             <groupId>com.asbestosstar</groupId>
-            <artifactId>assistremapper</artifactId>
-            <version>1.2</version>
-        </dependency>
-
-        <!-- Fabric CFR -->
-        <dependency>
-            <groupId>net.fabricmc</groupId>
-            <artifactId>cfr</artifactId>
-            <version>0.2.2</version>
-        </dependency>
-
-        <!-- VineFlower -->
-        <dependency>
-            <groupId>org.vineflower</groupId>
-            <artifactId>vineflower</artifactId>
-            <version>1.11.2</version>
+            <artifactId>fcdependencies-core</artifactId>
+            <version>0.1.0</version>
         </dependency>
 
         <dependency>
             <groupId>org.apache.maven.shared</groupId>
             <artifactId>maven-artifact-transfer</artifactId>
             <version>0.13.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.12.2</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
@@ -106,8 +108,22 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.11.0</version>
                 <configuration>
-                    <release>17</release>
+                    <release>25</release>
                 </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-plugin-plugin</artifactId>
+                <version>4.0.0-beta-2</version>
+                <executions>
+                    <execution>
+                        <id>default-descriptor</id>
+                        <goals>
+                            <goal>descriptor</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
 
             <!-- Attach Sources -->

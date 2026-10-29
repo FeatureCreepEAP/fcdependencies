@@ -1,0 +1,63 @@
+import org.gradle.api.publish.maven.MavenPublication
+import org.gradle.jvm.toolchain.JavaLanguageVersion
+
+plugins {
+    id 'java-gradle-plugin'
+    id 'maven-publish'
+    id 'signing'
+}
+
+base.archivesName = 'fcdependencies-gradle-plugin'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+    withSourcesJar()
+    withJavadocJar()
+}
+
+repositories {
+    mavenCentral()
+    maven { url 'https://maven.fabricmc.net/' }
+}
+
+dependencies {
+    implementation project(':core')
+
+    testImplementation platform('org.junit:junit-bom:5.12.2')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+publishing {
+    publications.withType(MavenPublication).configureEach {
+        if (name == 'pluginMaven') {
+            artifactId = 'fcdependencies-gradle-plugin'
+        }
+        pom {
+            name = 'FCDependencies Gradle Plugin'
+            description = 'Provides runClient and runServer for Minecraft 26.1.2 and newer, vanilla or FeatureCreep.'
+        }
+    }
+}
+
+signing {
+    useGpgCmd()
+    sign publishing.publications
+}
+
+gradlePlugin {
+    plugins {
+        fcdependencies {
+            id = 'com.asbestosstar.fcdependencies'
+            implementationClass = 'featurecreep.fcdependencies.gradle.FcDependenciesGradlePlugin'
+            displayName = 'FCDependencies'
+            description = 'Provides runClient and runServer for Minecraft 26.1.2 and newer, vanilla or FeatureCreep.'
+        }
+    }
+}
+
+test {
+    useJUnitPlatform()
+}

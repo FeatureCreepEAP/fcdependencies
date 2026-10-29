@@ -1,0 +1,8 @@
+# Copy this file to ~/.gradle/gradle.properties and fill in the values.
+# Keep the real file out of version control.
+
+# Sonatype Central Portal user token (central.sonatype.com -> Account -> Generate User Token)
+centralPortalUsername=
+centralPortalPassword=
+
+# GPG signing uses the gpg binary and gpg-agent from PATH; the passphrase is entered via pinentry.
